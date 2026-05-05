@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "Safari Bookmark Sync",
+  "version": "0.1.0",
+  "description": "Sync bookmarks between Chrome and Safari",
+  "permissions": ["bookmarks", "nativeMessaging", "storage"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}

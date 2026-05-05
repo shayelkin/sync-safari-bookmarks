@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <style>
+      body {
+        width: 240px;
+        padding: 12px;
+        font-family: system-ui, sans-serif;
+        font-size: 13px;
+      }
+      button {
+        width: 100%;
+        padding: 8px;
+        cursor: pointer;
+      }
+      button:disabled {
+        cursor: wait;
+      }
+      #status {
+        margin-top: 8px;
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="syncBtn">Sync Now</button>
+    <div id="status"></div>
+    <script src="sync.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>
