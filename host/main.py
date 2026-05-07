@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Native messaging host entry point.
 
 Reads a sync request from Chrome, merges with Safari bookmarks,

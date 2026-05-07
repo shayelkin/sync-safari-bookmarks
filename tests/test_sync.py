@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Property tests for the bookmark merge algorithm."""
 
 from __future__ import annotations

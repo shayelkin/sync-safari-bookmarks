@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Read and write Safari's Bookmarks.plist, converting to/from canonical format."""
 
 from __future__ import annotations

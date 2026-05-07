@@ -1,0 +1,25 @@
+name: CI (host)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - host/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/ci-host.yml
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - host/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/ci-host.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No host-relevant changes; passthrough."

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Chrome native messaging protocol: length-prefixed JSON over stdin/stdout."""
 
 from __future__ import annotations

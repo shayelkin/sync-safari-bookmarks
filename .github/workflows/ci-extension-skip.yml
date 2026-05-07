@@ -1,0 +1,19 @@
+name: CI (extension)
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - extension/**
+      - .github/workflows/ci-extension.yml
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - extension/**
+      - .github/workflows/ci-extension.yml
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No extension-relevant changes; passthrough."

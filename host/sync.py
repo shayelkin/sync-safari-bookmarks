@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Union merge of bookmark trees from Chrome and Safari."""
 
 from __future__ import annotations

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Tests for the native messaging entry point."""
 
 from __future__ import annotations

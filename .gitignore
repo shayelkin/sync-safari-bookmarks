@@ -6,3 +6,4 @@ __pycache__/
 .hypothesis/
 *~
 .claude/settings.local.json
+.coverage

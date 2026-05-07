@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 const btn = document.getElementById("syncBtn");
 const status = document.getElementById("status");
 

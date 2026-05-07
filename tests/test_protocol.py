@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Tests for native messaging protocol framing."""
 
 from __future__ import annotations

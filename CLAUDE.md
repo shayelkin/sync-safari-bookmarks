@@ -24,9 +24,25 @@ native messaging protocol; there  is no long-running daemon.
   obtain its ID): `./install.sh  <chrome-extension-id>`. This writes
   `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.shayelkin.sync_safari_bookmarks.json`
   pointing at `host/run.sh`, which execs `.venv/bin/python -m host.main`.
+- Validate extension JS syntax (parse-only, no lint):
+  `for f in extension/*.js; do node --input-type=module --check < "$f"; done`. Run this after
+  editing any file under `extension/`.
+- Validate Chrome MV3 manifest schema:
+  `uv tool run check-jsonschema --schemafile https://json.schemastore.org/chrome-manifest.json extension/manifest.json`.
+  Uses the SchemaStore schema (community-maintained, not authoritative); catches typos, wrong
+  types, and missing required fields.
 
 The Chrome extension lives in `extension/` and is loaded as an unpacked MV3 extension;
 `extension/manifest.json` is the entry point.
+
+## CI
+
+GitHub Actions runs in two split workflows: `ci-host.yml` triggers on changes under `host/`,
+`tests/`, `pyproject.toml`, or `uv.lock` and runs pytest+coverage and `ty check`;
+`ci-extension.yml` triggers on changes under `extension/` and runs the JS syntax check and the
+manifest schema validation. Each has a sibling `*-skip.yml` workflow on the inverse paths whose
+only job is a no-op passthrough — together they always report a `test` status check under each
+workflow name, so either can be set as a required check without blocking unrelated PRs.
 
 ## Architecture
 

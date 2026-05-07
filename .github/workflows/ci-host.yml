@@ -1,10 +1,22 @@
-name: CI
+name: CI (host)
 
 on:
   push:
     branches: [main]
+    paths:
+      - host/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/ci-host.yml
   pull_request:
     branches: [main]
+    paths:
+      - host/**
+      - tests/**
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/ci-host.yml
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true

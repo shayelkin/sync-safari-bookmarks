@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 """Tests for Safari plist reading/writing."""
 
 from __future__ import annotations

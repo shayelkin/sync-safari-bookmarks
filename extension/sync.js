@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 /**
  * Bookmark tree conversion and diff logic for the Chrome side.
  */
