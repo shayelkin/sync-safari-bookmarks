@@ -5,11 +5,12 @@ from __future__ import annotations
 import json
 import struct
 import sys
+from typing import IO
 
 
-def read_message(stream: object = None) -> dict:
+def read_message(stream: IO[bytes] | None = None) -> dict:
     """Read a single native message from stdin (or the given binary stream)."""
-    inp = stream or sys.stdin.buffer
+    inp = stream if stream is not None else sys.stdin.buffer
     raw_length = inp.read(4)
     if len(raw_length) < 4:
         raise EOFError("no message (stdin closed)")
@@ -22,9 +23,9 @@ def read_message(stream: object = None) -> dict:
     return json.loads(data)
 
 
-def write_message(msg: dict, stream: object = None) -> None:
+def write_message(msg: dict, stream: IO[bytes] | None = None) -> None:
     """Write a single native message to stdout (or the given binary stream)."""
-    out = stream or sys.stdout.buffer
+    out = stream if stream is not None else sys.stdout.buffer
     data = json.dumps(msg, separators=(",", ":")).encode("utf-8")
     out.write(struct.pack("<I", len(data)))
     out.write(data)

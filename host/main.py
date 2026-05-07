@@ -19,18 +19,26 @@ from host.safari_bookmarks import (
 )
 from host.sync import (
     Bookmark,
+    BookmarkItem,
     Folder,
+    bookmarkitem_from_dict,
+    bookmarkitem_to_dict,
     merge_trees,
-    tree_from_dicts,
-    tree_to_dicts,
 )
 
-STATE_DIR = Path.home() / ".local" / "share" / "sync-safari-bookmarks"
-STATE_FILE = STATE_DIR / "state.json"
-DELETED_ROOT = "Recently Deleted Bookmarks"
+STATE_FILE = Path.home() / ".local" / "share" / "sync-safari-bookmarks" / "state.json"
+RECENTLY_DELETED_TITLE = "Recently Deleted Bookmarks"
 
 
-def _load_previous_state() -> dict[str, list[Folder | Bookmark]] | None:
+def tree_to_dicts(items: list[BookmarkItem]) -> list[dict]:
+    return [bookmarkitem_to_dict(item) for item in items]
+
+
+def tree_from_dicts(dicts: list[dict]) -> list[BookmarkItem]:
+    return [bookmarkitem_from_dict(d) for d in dicts]
+
+
+def _load_previous_state() -> dict[str, list[BookmarkItem]] | None:
     if not STATE_FILE.exists():
         return None
     with open(STATE_FILE) as f:
@@ -38,8 +46,8 @@ def _load_previous_state() -> dict[str, list[Folder | Bookmark]] | None:
     return {key: tree_from_dicts(val) for key, val in data.items()}
 
 
-def _save_state(roots: dict[str, list[Folder | Bookmark]]) -> None:
-    STATE_DIR.mkdir(parents=True, exist_ok=True)
+def _save_state(roots: dict[str, list[BookmarkItem]]) -> None:
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(STATE_FILE, "w") as f:
         json.dump({key: tree_to_dicts(val) for key, val in roots.items()}, f)
 
@@ -48,7 +56,7 @@ def _handle_sync(chrome_roots: dict[str, list[dict]]) -> dict:
     safari_roots = read_safari()
     previous = _load_previous_state()
 
-    merged: dict[str, list[Folder | Bookmark]] = {}
+    merged: dict[str, list[BookmarkItem]] = {}
     all_deleted: list[Bookmark] = []
 
     for root_name in ("bookmark_bar", "other"):
@@ -66,12 +74,12 @@ def _handle_sync(chrome_roots: dict[str, list[dict]]) -> dict:
 
     # Put deleted bookmarks into a "Recently Deleted" folder in Safari's other bookmarks.
     if all_deleted:
-        deleted_folder = Folder(DELETED_ROOT, list(all_deleted))
+        deleted_folder = Folder(RECENTLY_DELETED_TITLE, list(all_deleted))
         other = merged.get("other", [])
         # Replace existing deleted folder if present.
         other = [
             item for item in other
-            if not (isinstance(item, Folder) and item.title == DELETED_ROOT)
+            if not (isinstance(item, Folder) and item.title == RECENTLY_DELETED_TITLE)
         ]
         other.append(deleted_folder)
         merged["other"] = other

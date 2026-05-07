@@ -7,14 +7,14 @@ from datetime import datetime, timezone
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from host.main import tree_from_dicts, tree_to_dicts
 from host.sync import (
     Bookmark,
+    BookmarkItem,
     Folder,
+    bookmarkitem_from_dict,
+    bookmarkitem_to_dict,
     merge_trees,
-    to_dict,
-    from_dict,
-    tree_to_dicts,
-    tree_from_dicts,
 )
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ tree_items = st.lists(
 )
 
 
-def _all_urls(items: list[Folder | Bookmark]) -> set[str]:
+def _all_urls(items: list[BookmarkItem]) -> set[str]:
     result: set[str] = set()
     for item in items:
         if isinstance(item, Bookmark):
@@ -63,7 +63,7 @@ def _all_urls(items: list[Folder | Bookmark]) -> set[str]:
 
 @given(a=tree_items)
 @settings(max_examples=200)
-def test_idempotent(a: list[Folder | Bookmark]) -> None:
+def test_idempotent(a: list[BookmarkItem]) -> None:
     """merge(A, A) produces the same URLs as A."""
     merged, deleted = merge_trees(a, a)
     assert deleted == []
@@ -72,7 +72,7 @@ def test_idempotent(a: list[Folder | Bookmark]) -> None:
 
 @given(a=tree_items, b=tree_items)
 @settings(max_examples=200)
-def test_commutative(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) -> None:
+def test_commutative(a: list[BookmarkItem], b: list[BookmarkItem]) -> None:
     """merge(A, B) and merge(B, A) contain the same URLs."""
     m1, _ = merge_trees(a, b)
     m2, _ = merge_trees(b, a)
@@ -81,7 +81,7 @@ def test_commutative(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) -> 
 
 @given(a=tree_items, b=tree_items)
 @settings(max_examples=200)
-def test_superset(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) -> None:
+def test_superset(a: list[BookmarkItem], b: list[BookmarkItem]) -> None:
     """merge(A, B) contains all URLs from A and B (without previous state)."""
     merged, _ = merge_trees(a, b)
     assert _all_urls(merged) >= _all_urls(a)
@@ -90,7 +90,7 @@ def test_superset(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) -> Non
 
 @given(a=tree_items, b=tree_items)
 @settings(max_examples=200)
-def test_no_data_loss(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) -> None:
+def test_no_data_loss(a: list[BookmarkItem], b: list[BookmarkItem]) -> None:
     """Without previous state, no bookmarks are deleted."""
     _, deleted = merge_trees(a, b)
     assert deleted == []
@@ -103,9 +103,21 @@ def test_no_data_loss(a: list[Folder | Bookmark], b: list[Folder | Bookmark]) ->
 
 def test_deletion_detected_when_removed_from_one_side() -> None:
     bm = Bookmark("Example", "https://example.com")
-    previous = [bm]
-    chrome: list[Folder | Bookmark] = [bm]
-    safari: list[Folder | Bookmark] = []  # removed from Safari
+    previous: list[BookmarkItem] = [bm]
+    chrome: list[BookmarkItem] = [bm]
+    safari: list[BookmarkItem] = []  # removed from Safari
+
+    merged, deleted = merge_trees(chrome, safari, previous)
+    assert len(deleted) == 1
+    assert deleted[0].url == "https://example.com"
+    assert _all_urls(merged) == set()
+
+
+def test_deletion_detected_when_removed_from_chrome() -> None:
+    bm = Bookmark("Example", "https://example.com")
+    previous: list[BookmarkItem] = [bm]
+    chrome: list[BookmarkItem] = []  # removed from Chrome
+    safari: list[BookmarkItem] = [bm]
 
     merged, deleted = merge_trees(chrome, safari, previous)
     assert len(deleted) == 1
@@ -115,8 +127,8 @@ def test_deletion_detected_when_removed_from_one_side() -> None:
 
 def test_new_bookmark_not_deleted_without_previous() -> None:
     bm = Bookmark("Example", "https://example.com")
-    chrome: list[Folder | Bookmark] = [bm]
-    safari: list[Folder | Bookmark] = []
+    chrome: list[BookmarkItem] = [bm]
+    safari: list[BookmarkItem] = []
 
     merged, deleted = merge_trees(chrome, safari)
     assert deleted == []
@@ -138,8 +150,8 @@ def test_conflict_keeps_later_date() -> None:
 def test_folder_merge() -> None:
     bm1 = Bookmark("A", "https://a.com")
     bm2 = Bookmark("B", "https://b.com")
-    chrome: list[Folder | Bookmark] = [Folder("Dev", [bm1])]
-    safari: list[Folder | Bookmark] = [Folder("Dev", [bm2])]
+    chrome: list[BookmarkItem] = [Folder("Dev", [bm1])]
+    safari: list[BookmarkItem] = [Folder("Dev", [bm2])]
 
     merged, _ = merge_trees(chrome, safari)
     assert len(merged) == 1
@@ -154,7 +166,7 @@ def test_folder_merge() -> None:
 
 @given(items=tree_items)
 @settings(max_examples=100)
-def test_serialization_roundtrip(items: list[Folder | Bookmark]) -> None:
+def test_serialization_roundtrip(items: list[BookmarkItem]) -> None:
     dicts = tree_to_dicts(items)
     recovered = tree_from_dicts(dicts)
     assert _all_urls(recovered) == _all_urls(items)
@@ -162,12 +174,12 @@ def test_serialization_roundtrip(items: list[Folder | Bookmark]) -> None:
 
 def test_from_dict_to_dict_identity() -> None:
     bm = Bookmark("X", "https://x.com", date=datetime(2025, 3, 1, tzinfo=timezone.utc))
-    d = to_dict(bm)
-    assert from_dict(d) == bm
+    d = bookmarkitem_to_dict(bm)
+    assert bookmarkitem_from_dict(d) == bm
 
     f = Folder("F", [bm])
-    d = to_dict(f)
-    recovered = from_dict(d)
+    d = bookmarkitem_to_dict(f)
+    recovered = bookmarkitem_from_dict(d)
     assert isinstance(recovered, Folder)
     assert recovered.title == "F"
     assert len(recovered.children) == 1

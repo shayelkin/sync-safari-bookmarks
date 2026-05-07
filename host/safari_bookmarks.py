@@ -6,10 +6,11 @@ import os
 import plistlib
 import tempfile
 import uuid
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
 
-from host.sync import Bookmark, Folder
+from host.sync import Bookmark, BookmarkItem, Folder
 
 BOOKMARKS_PLIST = Path.home() / "Library" / "Safari" / "Bookmarks.plist"
 
@@ -45,8 +46,8 @@ def _is_safari_preset(child: dict) -> bool:
 
 
 def strip_preset_lookalikes(
-    items: list[Folder | Bookmark],
-) -> list[Folder | Bookmark]:
+    items: list[BookmarkItem],
+) -> list[BookmarkItem]:
     """Drop top-level folders whose title clashes with a Safari preset."""
     return [
         i for i in items
@@ -54,7 +55,7 @@ def strip_preset_lookalikes(
     ]
 
 
-def read(path: Path = BOOKMARKS_PLIST) -> dict[str, list[Folder | Bookmark]]:
+def read(path: Path = BOOKMARKS_PLIST) -> dict[str, list[BookmarkItem]]:
     """Read Safari bookmarks, returning {bookmark_bar, other}.
 
     `bookmark_bar` is the children of Safari's BookmarksBar (Favorites).
@@ -64,7 +65,7 @@ def read(path: Path = BOOKMARKS_PLIST) -> dict[str, list[Folder | Bookmark]]:
     with open(path, "rb") as f:
         plist = plistlib.load(f)
 
-    bookmark_bar: list[Folder | Bookmark] = []
+    bookmark_bar: list[BookmarkItem] = []
     other_entries: list[dict] = []
     for child in plist.get("Children", []):
         if _is_safari_preset(child):
@@ -83,8 +84,8 @@ def read(path: Path = BOOKMARKS_PLIST) -> dict[str, list[Folder | Bookmark]]:
     return {"bookmark_bar": bookmark_bar, "other": _parse_children(other_entries)}
 
 
-def _parse_children(children: list[dict]) -> list[Folder | Bookmark]:
-    items: list[Folder | Bookmark] = []
+def _parse_children(children: list[dict]) -> list[BookmarkItem]:
+    items: list[BookmarkItem] = []
     for entry in children:
         wbt = entry.get("WebBookmarkType", "")
         if wbt == "WebBookmarkTypeLeaf":
@@ -112,7 +113,7 @@ def _parse_date(entry: dict) -> datetime:
 
 
 def write(
-    roots: dict[str, list[Folder | Bookmark]],
+    roots: dict[str, list[BookmarkItem]],
     path: Path = BOOKMARKS_PLIST,
 ) -> None:
     """Write merged bookmarks back to Safari's plist.
@@ -172,7 +173,7 @@ def write(
         raise
 
 
-def _serialize_children(items: list[Folder | Bookmark]) -> list[dict]:
+def _serialize_children(items: Sequence[BookmarkItem]) -> list[dict]:
     result: list[dict] = []
     for item in items:
         if isinstance(item, Bookmark):

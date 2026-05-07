@@ -13,6 +13,13 @@ native messaging protocol; there  is no long-running daemon.
 - Install Python deps: `uv sync`
 - Run tests: `uv run pytest`
 - Single test: `uv run pytest tests/test_sync.py::test_idempotent`
+- Type check: `uv run ty check`. Always run this in addition to the tests after changing
+  Python code; passing tests do not imply a clean type check.
+- Coverage: `uv run --with pytest-cov pytest --cov=host --cov-report=term-missing`. When
+  adding or modifying code, aim for maximal coverage — add tests for new branches and for
+  any uncovered lines you introduce. Defensive branches with no realistic trigger
+  (e.g. `__eq__` returning `NotImplemented`, `except` blocks for impossible OS errors) are
+  acceptable to leave uncovered; everything else should be exercised.
 - Install native host manifest (after loading the unpacked extension at `chrome://extensions` to
   obtain its ID): `./install.sh  <chrome-extension-id>`. This writes
   `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/com.shayelkin.sync_safari_bookmarks.json`

@@ -17,7 +17,7 @@ from host.safari_bookmarks import (
     strip_preset_lookalikes,
     write,
 )
-from host.sync import Bookmark, Folder
+from host.sync import Bookmark, BookmarkItem, Folder
 
 
 def _make_plist(bookmark_bar: list[dict] | None = None, other: list[dict] | None = None) -> bytes:
@@ -148,7 +148,7 @@ def test_other_lives_at_root_and_replaces_user_items(tmp_path: Path) -> None:
     assert any(isinstance(i, Folder) and i.title == "OldFolder" for i in parsed["other"])
 
     # Writing replaces user root items, leaves presets in place.
-    new_other: list[Folder | Bookmark] = [
+    new_other: list[BookmarkItem] = [
         Folder("Dev", [Bookmark("GH", "https://github.com")]),
         Bookmark("Loose", "https://loose.example"),
     ]
@@ -329,7 +329,7 @@ def test_write_drops_bookmarks_menu_folder_from_other(tmp_path: Path) -> None:
 
 
 def test_strip_preset_lookalikes_drops_only_top_level_preset_titles() -> None:
-    items: list[Folder | Bookmark] = [
+    items: list[BookmarkItem] = [
         Folder("com.apple.ReadingList", []),
         Folder("BookmarksMenu", []),
         Folder("Keep", [Folder("com.apple.ReadingList", [])]),  # nested, not stripped

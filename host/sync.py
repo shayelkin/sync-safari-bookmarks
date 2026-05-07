@@ -24,7 +24,7 @@ class Bookmark:
 @dataclass
 class Folder:
     title: str
-    children: list[Folder | Bookmark] = field(default_factory=list)
+    children: list[BookmarkItem] = field(default_factory=list)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Folder):
@@ -35,15 +35,14 @@ class Folder:
         return hash(self.title)
 
 
-# Bookmarks removed during merge go here (not synced back).
-RECENTLY_DELETED_TITLE = "Recently Deleted Bookmarks"
+type BookmarkItem = Folder | Bookmark
 
 
 def merge_trees(
-    chrome: list[Folder | Bookmark],
-    safari: list[Folder | Bookmark],
-    previous: list[Folder | Bookmark] | None = None,
-) -> tuple[list[Folder | Bookmark], list[Bookmark]]:
+    chrome: list[BookmarkItem],
+    safari: list[BookmarkItem],
+    previous: list[BookmarkItem] | None = None,
+) -> tuple[list[BookmarkItem], list[Bookmark]]:
     """Merge two bookmark lists, returning (merged, deleted).
 
     `previous` is the last-known merged state. If a bookmark was in `previous`
@@ -58,11 +57,11 @@ def merge_trees(
 
 
 def _merge_children(
-    a: list[Folder | Bookmark],
-    b: list[Folder | Bookmark],
-    prev: list[Folder | Bookmark] | None,
+    a: list[BookmarkItem],
+    b: list[BookmarkItem],
+    prev: list[BookmarkItem] | None,
     deleted: list[Bookmark],
-) -> list[Folder | Bookmark]:
+) -> list[BookmarkItem]:
     prev_folders = _folder_index(prev) if prev else {}
     prev_bookmarks = _bookmark_index(prev) if prev else {}
 
@@ -71,7 +70,7 @@ def _merge_children(
     a_bookmarks = _bookmark_index(a)
     b_bookmarks = _bookmark_index(b)
 
-    result: list[Folder | Bookmark] = []
+    result: list[BookmarkItem] = []
 
     # Merge folders: present in either side
     all_folder_titles = list(dict.fromkeys(
@@ -127,7 +126,7 @@ def _merge_children(
     return result
 
 
-def _folder_index(items: list[Folder | Bookmark] | None) -> dict[str, Folder]:
+def _folder_index(items: list[BookmarkItem] | None) -> dict[str, Folder]:
     if not items:
         return {}
     index: dict[str, Folder] = {}
@@ -142,13 +141,13 @@ def _folder_index(items: list[Folder | Bookmark] | None) -> dict[str, Folder]:
     return index
 
 
-def _bookmark_index(items: list[Folder | Bookmark] | None) -> dict[str, Bookmark]:
+def _bookmark_index(items: list[BookmarkItem] | None) -> dict[str, Bookmark]:
     if not items:
         return {}
     return {item.url: item for item in items if isinstance(item, Bookmark)}
 
 
-def to_dict(item: Folder | Bookmark) -> dict:
+def bookmarkitem_to_dict(item: BookmarkItem) -> dict:
     if isinstance(item, Bookmark):
         return {
             "type": "bookmark",
@@ -159,11 +158,11 @@ def to_dict(item: Folder | Bookmark) -> dict:
     return {
         "type": "folder",
         "title": item.title,
-        "children": [to_dict(c) for c in item.children],
+        "children": [bookmarkitem_to_dict(c) for c in item.children],
     }
 
 
-def from_dict(d: dict) -> Folder | Bookmark:
+def bookmarkitem_from_dict(d: dict) -> BookmarkItem:
     if d["type"] == "bookmark":
         return Bookmark(
             title=d["title"],
@@ -172,13 +171,7 @@ def from_dict(d: dict) -> Folder | Bookmark:
         )
     return Folder(
         title=d["title"],
-        children=[from_dict(c) for c in d.get("children", [])],
+        children=[bookmarkitem_from_dict(c) for c in d.get("children", [])],
     )
 
 
-def tree_to_dicts(items: list[Folder | Bookmark]) -> list[dict]:
-    return [to_dict(item) for item in items]
-
-
-def tree_from_dicts(dicts: list[dict]) -> list[Folder | Bookmark]:
-    return [from_dict(d) for d in dicts]
