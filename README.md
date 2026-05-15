@@ -31,4 +31,7 @@ and surfaces deletions in a `Recently Deleted Bookmarks` folder.
 
 ## License
 
-This software is made available under the terms of the [MIT license](LICENSE).
+This software is licensed under the terms of the [MIT license](LICENSE), with the exception of the
+icons (in `/extension/icons/`), which were derived from   [Google Material
+Symbols](https://fonts.google.com/icons), and are  licensed under [Apache-2.0
+license](LICENSE-icons).
